@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+
+# Modelos entrenados
+servidor-entrenamiento/models/train/
+servidor-entrenamiento/runs/
+
+# Datasets
+servidor-entrenamiento/dataset/images/
+servidor-entrenamiento/dataset/labels/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+build/
+out/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Temporales
+*.tmp
+*.temp
+/tmp/
+
+# Docker
+.dockerignore
