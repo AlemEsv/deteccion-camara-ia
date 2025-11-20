@@ -1,0 +1,25 @@
+{
+  "name": "servidor-entrenamiento",
+  "version": "1.0.0",
+  "description": "Servidor de Entrenamiento para el Sistema Distribuido de Detección",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/cliente-train.js"
+  },
+  "keywords": [
+    "yolo",
+    "training",
+    "socket",
+    "tcp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "package-lock.json": "^1.0.0",
+    "package.json": "^2.0.1"
+  }
+}

@@ -3,9 +3,11 @@
 ## 📋 Entregables del Proyecto
 
 ### 1. Informe Técnico (informe_pc4.pdf)
+
 **Formato:** LaTeX Article
 **Páginas:** 14
 **Contenido:**
+
 - Resumen ejecutivo del proyecto
 - Arquitectura detallada del sistema
 - Protocolo de comunicación por sockets
@@ -26,9 +28,11 @@
 ---
 
 ### 2. Presentación Ejecutiva (presentacion_pc4.pdf)
+
 **Formato:** LaTeX Beamer
 **Diapositivas:** 22
 **Contenido:**
+
 - Introducción y objetivos del proyecto
 - Arquitectura distribuida visual
 - Componentes y responsabilidades del equipo
@@ -85,14 +89,16 @@
 
 ## 📝 Notas Técnicas
 
-### Restricciones Cumplidas:
+### Restricciones Cumplidas
+
 ✓ Uso exclusivo de sockets TCP puros (sin frameworks)
 ✓ Procesamiento concurrente con hilos y sincronización
 ✓ Despliegue en red LAN/WIFI verificado
 ✓ Protocolo personalizado sin librerías de alto nivel
 ✓ Sin WebSocket, Socket.IO, RabbitMQ, etc.
 
-### Desafíos Superados:
+### Desafíos Superados
+
 ✓ Sincronización de logs multi-hilo con ReentrantLock
 ✓ Comunicación inter-lenguaje (Java ↔ Python ↔ Node.js)
 ✓ Transferencia de datos binarios por sockets
@@ -102,13 +108,16 @@
 
 ## 🚀 Uso de los Documentos
 
-### Para la Exposición:
+### Para la Exposición
+
 Utilizar `presentacion_pc4.pdf` - Diseñada para proyectar y presentar oralmente
 
-### Para Entrega Formal:
+### Para Entrega Formal
+
 Utilizar `informe_pc4.pdf` - Documentación técnica completa y detallada
 
-### Para Consulta Futura:
+### Para Consulta Futura
+
 Ambos documentos están en LaTeX para fácil modificación y actualización
 
 ---
@@ -116,6 +125,7 @@ Ambos documentos están en LaTeX para fácil modificación y actualización
 ## 📂 Archivos Fuente
 
 Los archivos fuente LaTeX están disponibles si necesitas modificarlos:
+
 - `informe_pc4.tex` - Código LaTeX del informe
 - `presentacion_pc4.tex` - Código LaTeX de la presentación
 

@@ -10,12 +10,12 @@ ENV/
 env/
 
 # Modelos entrenados
-servidor-entrenamiento/models/train/
-servidor-entrenamiento/runs/
+modelo-ia/models/train/
+modelo-ia/runs/
 
 # Datasets
-servidor-entrenamiento/dataset/images/
-servidor-entrenamiento/dataset/labels/
+modelo-ia/dataset/images/
+modelo-ia/dataset/labels/
 
 # Node.js
 node_modules/

@@ -1,23 +1,117 @@
-# Módulo de IA - YOLOv8
+# Servidor de Entrenamiento (Node.js)
 
-Sistema de detección de objetos usando YOLOv8 para detectar 3 clases:
+Servidor TCP que maneja la recepción de imágenes para entrenamiento y la ejecución del proceso de entrenamiento del modelo YOLOv8.
 
-- Persona, Gato, Perro
+## Características
+
+- **Servidor TCP** en puerto 9000
+- **Protocolo personalizado** para subir imágenes (`UPLOAD`)
+- **Ejecución de entrenamiento** mediante proceso hijo (`START_TRAIN`)
+- **Integración con módulo Python** existente
+
+## Estructura
+
+```txt
+servidor-entrenamiento/
+├── src/
+│   ├── server.js              # Servidor principal
+│   ├── protocol/
+│   │   └── parser.js          # Parser del protocolo
+│   └── handlers/
+│       ├── uploadHandler.js   # Maneja UPLOAD
+│       └── trainHandler.js    # Maneja START_TRAIN
+├── test/
+|   ├── cliente-train.js       # Cliente de prueba
+│   ├── img_13                 # imagen 13 de prueba
+|   └── img_14                 # imagen 14 de prueba
+├── config.js                  # Configuración
+└── package.json
+```
+
+## Instalación
+
+No requiere dependencias externas (solo módulos nativos de Node.js).
+
+```bash
+# Asegúrate de tener Node.js instalado (>=14.0.0)
+node --version
+```
 
 ## Uso
 
+### Iniciar el servidor
+
 ```bash
-# Construir imagen
-docker build -t yolo-ia .
-# Entrenar modelo
-docker run --rm -v ${PWD}:/app yolo-ia python src/train.py 20 8
-# Detectar imagen
-docker run --rm -v ${PWD}:/app yolo-ia python src/detect.py /app/ruta/a/imagen.jpg
+npm start
+# o
+node src/server.js
 ```
+
+El servidor escuchará en el puerto 9000.
+
+### Cliente de Prueba
+
+#### Subir una imagen
+
+```bash
+node test/cliente-train.js upload ../modelo-ia/dataset/images/train/img_1.jpg Perro
+```
+
+#### Iniciar entrenamiento
+
+```bash
+node test/cliente-train.js train
+```
+
+## Protocolo
+
+### Comando UPLOAD
+
+**Formato:**
+
+```txt
+UPLOAD:<label>:<filename>:<filesize>\n[...DATA...]
+```
+
+**Ejemplo:**
+
+```txt
+UPLOAD:Perro:dog1.jpg:50000\n[50000 bytes de imagen]
+```
+
+**Respuesta:**
+
+```txt
+UPLOAD_SUCCESS:dog1.jpg\n
+```
+
+### Comando START_TRAIN
+
+**Formato:**
+
+```txt
+START_TRAIN\n
+```
+
+**Respuesta:**
+
+```txt
+TRAINING_STARTED\n
+... (salida del entrenamiento) ...
+TRAINING_COMPLETE\n
+```
+
+## Configuración
+
+Edita `config.js` para cambiar:
+
+- Puerto del servidor
+- Rutas del dataset
+- Parámetros de entrenamiento por defecto
 
 ## Integración
 
-**Node.js:** `python src/train.py 50`  
-**Java:** `python src/detect.py /tmp/frame.jpg`
+Este servidor se integra con:
 
-Salida: `CLASE,CONFIANZA,X,Y,W,H`
+- **Módulo Python** (`../modelo-ia/`): Ejecuta `train.py` como proceso hijo
+- **Cliente Admin**: Se conecta al puerto 9000 para subir imágenes e iniciar entrenamiento
