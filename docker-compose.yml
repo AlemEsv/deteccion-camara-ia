@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # Servidor de Entrenamiento
+  servidor-entrenamiento:
+    build:
+      context: ./servidor-entrenamiento
+      dockerfile: Dockerfile
+    container_name: servidor-entrenamiento
+    ports:
+      - "9000:9000"
+    volumes:
+      # Volumen compartido con modelo-ia para acceder a datasets y modelos
+      - modelo-data:/modelo-ia
+    networks:
+      - deteccion-network
+    restart: unless-stopped
+
+volumes:
+  modelo-data:
+    driver: local
+
+networks:
+  deteccion-network:
+    driver: bridge
