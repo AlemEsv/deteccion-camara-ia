@@ -1,5 +1,5 @@
 # Rutas relativas al directorio del dataset
-path: dataset 
+path: ../dataset 
 train: images/train
 val: images/val
 
