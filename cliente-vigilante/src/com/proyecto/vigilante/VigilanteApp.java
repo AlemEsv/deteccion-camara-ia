@@ -150,13 +150,37 @@ public class VigilanteApp extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Cambia "127.0.0.1" por la IP donde corre tu servidor Python (log_server.py)
+        // Configuración por defecto
         String host = "127.0.0.1";
         int logPort = 9001;
         int imgPort = 9002;
 
+        // Aceptar argumentos de línea de comandos
+        if (args.length > 0) {
+            host = args[0];
+        }
+        if (args.length > 1) {
+            logPort = Integer.parseInt(args[1]);
+        }
+        if (args.length > 2) {
+            imgPort = Integer.parseInt(args[2]);
+        }
+
+        final String finalHost = host;
+        final int finalLogPort = logPort;
+        final int finalImgPort = imgPort;
+
+        System.out.println("=".repeat(50));
+        System.out.println("CLIENTE VIGILANTE - CC4P1");
+        System.out.println("=".repeat(50));
+        System.out.println("Conectando a:");
+        System.out.println("  Host: " + finalHost);
+        System.out.println("  Puerto Logs: " + finalLogPort);
+        System.out.println("  Puerto Imágenes: " + finalImgPort);
+        System.out.println("=".repeat(50));
+
         SwingUtilities.invokeLater(() -> {
-            VigilanteApp app = new VigilanteApp(host, logPort, imgPort);
+            VigilanteApp app = new VigilanteApp(finalHost, finalLogPort, finalImgPort);
             app.setVisible(true);
         });
     }
