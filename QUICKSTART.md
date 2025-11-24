@@ -1,5 +1,12 @@
 # Guía de Inicio Rápido
 
+## Requisitos Previos
+
+- **Java JDK 11+**
+- **Python 3.8+**
+- **Node.js 14+**
+- **OpenCV 4.12.0**
+
 ## Instalar Dependencias
 
 ### Python (Modelo IA)
@@ -10,7 +17,7 @@ pip install -r requirements.txt
 cd ..
 ```
 
-#### Node.js (Servidor Entrenamiento)
+### Node.js (Servidor Entrenamiento)
 
 ```powershell
 cd servidor-entrenamiento
@@ -20,28 +27,46 @@ cd ..
 
 ## Configurar Cámaras
 
-Edita `servidor-testeo/cameras_config.txt` y agrega al menos una cámara de prueba:
+Edita `servidor-testeo/cameras_config.txt`:
 
 ```txt
-# Descomenta esta línea para usar un stream de prueba
-TEST1,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4
+# IMPORTANTE: Los streams RTSP públicos pueden no funcionar por firewall
+# Opción 1: Stream de prueba (puede fallar)
+# TEST1,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4
+
+# Opción 2: Video local (RECOMENDADO para pruebas)
+TEST1,test_video.mp4
+
+# Opción 3: Cámara real
+# CAM1,rtsp://192.168.1.100:554/stream
 ```
 
-O si tienes cámaras reales:
+**⚠️ NOTA:** Si usas video local, asegúrate de tener un archivo `test_video.mp4` en `servidor-testeo/`
 
-```txt
-CAM1,rtsp://192.168.1.100:554/stream
+## Ejecutar el Sistema
+
+```powershell
+# Compilar todos los componentes
+make compile-all
 ```
 
-## Ejecutar los Componentes
+### Servidor de Testeo
 
 ```powershell
 # Terminal 1
 make run-testing
+```
 
+### Servidor de Entrenamiento
+
+```powershell
 # Terminal 2
 make run-node
+```
 
+### Cliente Vigilante
+
+```powershell
 # Terminal 3
 make run-cliente
 ```
