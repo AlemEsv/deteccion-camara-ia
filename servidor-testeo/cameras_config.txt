@@ -3,7 +3,7 @@
 # 
 # Stream de prueba (usando archivo de video generado)
 # Para ver detecciones de prueba, usa un archivo local:
-TEST1,test_video.mp4
+TEST1,test_video.avi
 
 # Otros streams de prueba públicos (descomenta para probar):
 # TEST2,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4

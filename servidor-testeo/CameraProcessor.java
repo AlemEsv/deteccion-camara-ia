@@ -44,11 +44,197 @@ public class CameraProcessor implements Runnable {
     public void run() {
         System.out.println("[" + cameraId + "] Iniciando procesamiento de cámara: " + rtspUrl);
         
+        // Verificar si es una URL RTSP/HTTP o un archivo local
+        boolean isStreamUrl = rtspUrl.startsWith("rtsp://") || rtspUrl.startsWith("http://") || rtspUrl.startsWith("https://");
+        
+        if (isStreamUrl) {
+            processVideoStream();
+        } else {
+            processVideoFile();
+        }
+    }
+    
+    private void processVideoFile() {
+        try {
+            // Convertir ruta relativa a absoluta
+            File videoFile = new File(rtspUrl);
+            if (!videoFile.exists()) {
+                System.err.println("[" + cameraId + "] ERROR: Archivo no encontrado: " + rtspUrl);
+                return;
+            }
+            
+            String videoPath = videoFile.getAbsolutePath();
+            System.out.println("[" + cameraId + "] Usando ruta absoluta: " + videoPath);
+            
+            VideoCapture capture = new VideoCapture();
+            capture.open(videoPath);
+            
+            if (!capture.isOpened()) {
+                System.err.println("[" + cameraId + "] ERROR: No se pudo abrir el video");
+                System.err.println("[" + cameraId + "] Intentando modo alternativo: procesamiento de imágenes...");
+                processImageSequence();
+                return;
+            }
+            
+            System.out.println("[" + cameraId + "] Video abierto exitosamente");
+            
+            // Obtener información del video
+            double fps = capture.get(Videoio.CAP_PROP_FPS);
+            int totalFrames = (int) capture.get(Videoio.CAP_PROP_FRAME_COUNT);
+            System.out.println("[" + cameraId + "] FPS: " + fps + ", Total frames: " + totalFrames);
+            
+            Mat frame = new Mat();
+            int frameCount = 0;
+            int processedFrames = 0;
+            int errorCount = 0;
+            final int MAX_ERRORS = 5;
+            
+            while (running && capture.isOpened()) {
+                boolean success = capture.read(frame);
+                
+                if (!success || frame.empty()) {
+                    errorCount++;
+                    
+                    // Si llegamos al final del video o hay muchos errores, reiniciar
+                    if (frameCount >= totalFrames - 1 || errorCount >= MAX_ERRORS) {
+                        System.out.println("[" + cameraId + "] Fin del video o errores consecutivos. Cerrando y reabriendo...");
+                        capture.release();
+                        Thread.sleep(1000);
+                        
+                        // Reabrir el video
+                        capture.open(videoPath);
+                        if (!capture.isOpened()) {
+                            System.err.println("[" + cameraId + "] ERROR al reabrir video. Cambiando a modo de imágenes...");
+                            processImageSequence();
+                            return;
+                        }
+                        
+                        frameCount = 0;
+                        errorCount = 0;
+                        System.out.println("[" + cameraId + "] Video reabierto exitosamente");
+                        continue;
+                    }
+                    
+                    Thread.sleep(500);
+                    continue;
+                }
+                
+                errorCount = 0; // Reset error count on successful read
+                frameCount++;
+                
+                // Procesar solo 1 de cada N frames
+                if (frameCount % frameSkip != 0) {
+                    continue;
+                }
+                
+                processedFrames++;
+                System.out.println("[" + cameraId + "] Procesando frame " + frameCount + "/" + totalFrames);
+                
+                // Guardar frame temporalmente
+                String tempImagePath = tempFramePath + "/" + cameraId + "_frame.jpg";
+                boolean saved = Imgcodecs.imwrite(tempImagePath, frame);
+                
+                if (!saved) {
+                    System.err.println("[" + cameraId + "] ERROR: No se pudo guardar el frame");
+                    continue;
+                }
+                
+                // Llamar al script de detección
+                String detectionResult = callDetectionScript(tempImagePath);
+                
+                if (detectionResult != null && !detectionResult.trim().isEmpty()) {
+                    processDetectionResult(detectionResult, frame);
+                }
+                
+                Thread.sleep(1000); // Pausa entre frames procesados
+            }
+            
+            capture.release();
+            
+        } catch (Exception e) {
+            System.err.println("[" + cameraId + "] ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void processImageSequence() {
+        // Modo alternativo: procesar imágenes del dataset en bucle
+        try {
+            File datasetDir = new File("../modelo-ia/dataset/images/val");
+            if (!datasetDir.exists()) {
+                datasetDir = new File("modelo-ia/dataset/images/val");
+            }
+            
+            if (!datasetDir.exists()) {
+                System.err.println("[" + cameraId + "] ERROR: No se encontró el directorio de imágenes");
+                return;
+            }
+            
+            File[] images = datasetDir.listFiles((dir, name) -> 
+                name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".png"));
+            
+            if (images == null || images.length == 0) {
+                System.err.println("[" + cameraId + "] ERROR: No hay imágenes en el directorio");
+                return;
+            }
+            
+            System.out.println("[" + cameraId + "] Modo secuencia de imágenes: " + images.length + " imágenes encontradas");
+            
+            int imageIndex = 0;
+            while (running) {
+                File imageFile = images[imageIndex % images.length];
+                System.out.println("[" + cameraId + "] Procesando imagen: " + imageFile.getName());
+                
+                // Leer imagen
+                Mat frame = Imgcodecs.imread(imageFile.getAbsolutePath());
+                
+                if (frame.empty()) {
+                    System.err.println("[" + cameraId + "] ERROR al leer imagen: " + imageFile.getName());
+                    imageIndex++;
+                    continue;
+                }
+                
+                // Guardar como frame temporal
+                String tempImagePath = tempFramePath + "/" + cameraId + "_frame.jpg";
+                Imgcodecs.imwrite(tempImagePath, frame);
+                
+                // Llamar al script de detección
+                String detectionResult = callDetectionScript(tempImagePath);
+                
+                if (detectionResult != null && !detectionResult.trim().isEmpty()) {
+                    processDetectionResult(detectionResult, frame);
+                }
+                
+                frame.release();
+                imageIndex++;
+                Thread.sleep(3000); // Procesar una imagen cada 3 segundos
+            }
+            
+        } catch (Exception e) {
+            System.err.println("[" + cameraId + "] ERROR en secuencia de imágenes: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void processVideoStream() {
         VideoCapture capture = new VideoCapture();
         
         try {
-            // Conectar a la cámara RTSP
-            capture.open(rtspUrl);
+            // Convertir ruta relativa a absoluta si es un archivo local
+            String videoPath = rtspUrl;
+            if (!rtspUrl.startsWith("rtsp://") && !rtspUrl.startsWith("http://") && !rtspUrl.startsWith("https://")) {
+                File videoFile = new File(rtspUrl);
+                if (videoFile.exists()) {
+                    videoPath = videoFile.getAbsolutePath();
+                    System.out.println("[" + cameraId + "] Usando ruta absoluta: " + videoPath);
+                } else {
+                    System.err.println("[" + cameraId + "] ERROR: Archivo no encontrado: " + rtspUrl);
+                    return;
+                }
+            }
+            
+            // Conectar a la cámara RTSP o archivo de video
+            capture.open(videoPath);
             
             if (!capture.isOpened()) {
                 System.err.println("[" + cameraId + "] ERROR: No se pudo conectar a la cámara");
@@ -110,7 +296,7 @@ public class CameraProcessor implements Runnable {
      */
     private String callDetectionScript(String imagePath) {
         try {
-            ProcessBuilder pb = new ProcessBuilder("python3", pythonScriptPath, imagePath);
+            ProcessBuilder pb = new ProcessBuilder("python", pythonScriptPath, imagePath);
             pb.redirectErrorStream(true);
             
             Process process = pb.start();
@@ -127,12 +313,18 @@ public class CameraProcessor implements Runnable {
                 output.append(line).append("\n");
             }
             
-            process.waitFor();
+            int exitCode = process.waitFor();
+            
+            if (exitCode != 0) {
+                System.err.println("[" + cameraId + "] Script Python terminó con código: " + exitCode);
+                System.err.println("[" + cameraId + "] Salida: " + output.toString());
+            }
             
             return output.toString().trim();
             
         } catch (Exception e) {
             System.err.println("[" + cameraId + "] ERROR llamando al script de IA: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }

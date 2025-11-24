@@ -30,14 +30,14 @@ cd ..
 Edita `servidor-testeo/cameras_config.txt`:
 
 ```txt
-# IMPORTANTE: Los streams RTSP públicos pueden no funcionar por firewall
-# Opción 1: Stream de prueba (puede fallar)
-# TEST1,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4
-
-# Opción 2: Video local (RECOMENDADO para pruebas)
+# OPCIÓN RECOMENDADA: Video de prueba local
 TEST1,test_video.mp4
 
-# Opción 3: Cámara real
+# Alternativas:
+# Stream RTSP público (puede fallar por firewall)
+# TEST1,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4
+
+# Cámara real
 # CAM1,rtsp://192.168.1.100:554/stream
 ```
 

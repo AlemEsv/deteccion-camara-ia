@@ -1,7 +1,7 @@
 # Sistema Distribuido de Detección - CC4P1
 
 .PHONY: all up down logs clean help
-.PHONY: compile-cliente run-cliente compile-testing run-testing
+.PHONY: compile-all compile-cliente run-cliente compile-testing run-testing
 .PHONY: install-node train-modelo test-train
 
 JAVA_SRC_CLIENTE = cliente-vigilante/src/com/proyecto/vigilante
@@ -35,9 +35,10 @@ clean: ## Limpiar todo
 	@if exist "$(JAVA_SRC_TESTING)\temp_frames" rmdir /s /q "$(JAVA_SRC_TESTING)\temp_frames"
 	@if exist "$(JAVA_SRC_TESTING)\detection_images" rmdir /s /q "$(JAVA_SRC_TESTING)\detection_images"
 
-# ==============================================================================
-# Cliente Vigilante (Java)
-# ==============================================================================
+compile-all: compile-cliente compile-testing ## Compilar todos los componentes
+	@echo ====================================
+	@echo Compilacion completa exitosa!
+	@echo ====================================
 
 compile-cliente: ## Compilar cliente vigilante
 	@echo Compilando Cliente Vigilante...
@@ -50,10 +51,6 @@ run-cliente: compile-cliente ## Ejecutar cliente vigilante
 	@echo Conectando a $(SERVER_HOST):$(LOG_PORT) y $(SERVER_HOST):$(IMAGE_PORT)
 	cd $(JAVA_BIN_CLIENTE)/.. && java -cp bin com.proyecto.vigilante.VigilanteApp $(SERVER_HOST) $(LOG_PORT) $(IMAGE_PORT)
 
-# ==============================================================================
-# Servidor de Testeo (Java)
-# ==============================================================================
-
 compile-testing: ## Compilar servidor de testeo
 	@echo Compilando Servidor de Testeo...
 	cd $(JAVA_SRC_TESTING) && javac -cp ".;../lib/opencv-4120.jar" *.java
@@ -64,10 +61,6 @@ run-testing: compile-testing ## Ejecutar servidor de testeo
 	@if not exist "$(JAVA_SRC_TESTING)\temp_frames" mkdir "$(JAVA_SRC_TESTING)\temp_frames"
 	@if not exist "$(JAVA_SRC_TESTING)\detection_images" mkdir "$(JAVA_SRC_TESTING)\detection_images"
 	cd $(JAVA_SRC_TESTING) && java -Djava.library.path=. -cp ".;../lib/opencv-4120.jar" TestingServer ../modelo-ia/src/detect.py ./temp_frames ./detection_images $(LOG_PORT) $(IMAGE_PORT) 30
-
-# ==============================================================================
-# Servidor de Entrenamiento (Node.js)
-# ==============================================================================
 
 install-node: ## Instalar dependencias de Node.js
 	@echo Instalando dependencias de Node.js...
@@ -82,10 +75,6 @@ test-train: ## Ejecutar cliente de prueba de entrenamiento
 	@echo Ejecutando cliente de prueba...
 	cd $(NODE_DIR) && node test/cliente-train.js
 
-# ==============================================================================
-# Modelo de IA (Python)
-# ==============================================================================
-
 install-python: ## Instalar dependencias de Python
 	@echo Instalando dependencias de Python...
 	pip install -r $(MODELO_DIR)/requirements.txt
@@ -98,10 +87,6 @@ train-modelo: ## Entrenar modelo de IA
 test-detect: ## Probar detección con imagen de prueba
 	@echo Probando detección...
 	cd $(MODELO_DIR)/src && python detect.py ../dataset/images/val/img_1.jpg
-
-# ==============================================================================
-# Ayuda
-# ==============================================================================
 
 help: ## Mostrar esta ayuda
 	@echo Sistema Distribuido de Deteccion - CC4P1
