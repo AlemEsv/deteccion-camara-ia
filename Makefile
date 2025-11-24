@@ -56,14 +56,14 @@ run-cliente: compile-cliente ## Ejecutar cliente vigilante
 
 compile-testing: ## Compilar servidor de testeo
 	@echo Compilando Servidor de Testeo...
-	cd $(JAVA_SRC_TESTING) && javac -cp .;* *.java
+	cd $(JAVA_SRC_TESTING) && javac -cp ".;../lib/opencv-4120.jar" *.java
 	@echo Servidor compilado exitosamente
 
 run-testing: compile-testing ## Ejecutar servidor de testeo
 	@echo Ejecutando Servidor de Testeo...
 	@if not exist "$(JAVA_SRC_TESTING)\temp_frames" mkdir "$(JAVA_SRC_TESTING)\temp_frames"
 	@if not exist "$(JAVA_SRC_TESTING)\detection_images" mkdir "$(JAVA_SRC_TESTING)\detection_images"
-	cd $(JAVA_SRC_TESTING) && java -Djava.library.path=. TestingServer ../modelo-ia/src/detect.py ./temp_frames ./detection_images $(LOG_PORT) $(IMAGE_PORT) 30
+	cd $(JAVA_SRC_TESTING) && java -Djava.library.path=. -cp ".;../lib/opencv-4120.jar" TestingServer ../modelo-ia/src/detect.py ./temp_frames ./detection_images $(LOG_PORT) $(IMAGE_PORT) 30
 
 # ==============================================================================
 # Servidor de Entrenamiento (Node.js)
