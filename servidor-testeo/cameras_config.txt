@@ -1,9 +1,8 @@
 # Configuración de Cámaras para el Servidor de Testeo
 # Formato: CAM_ID,RTSP_URL
 # 
-# Stream de prueba (usando archivo de video generado)
-# Para ver detecciones de prueba, usa un archivo local:
-TEST1,test_video.avi
+# Webcam USB (cámara integrada o USB externa)
+TEST1,0
 
 # Otros streams de prueba públicos (descomenta para probar):
 # TEST2,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4

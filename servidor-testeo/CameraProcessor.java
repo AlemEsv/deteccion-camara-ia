@@ -44,13 +44,83 @@ public class CameraProcessor implements Runnable {
     public void run() {
         System.out.println("[" + cameraId + "] Iniciando procesamiento de cámara: " + rtspUrl);
         
-        // Verificar si es una URL RTSP/HTTP o un archivo local
+        // Verificar si es una URL RTSP/HTTP, ID de cámara, o archivo local
         boolean isStreamUrl = rtspUrl.startsWith("rtsp://") || rtspUrl.startsWith("http://") || rtspUrl.startsWith("https://");
+        boolean isCameraId = rtspUrl.matches("\\d+");
         
         if (isStreamUrl) {
             processVideoStream();
+        } else if (isCameraId) {
+            processWebcam(Integer.parseInt(rtspUrl));
         } else {
             processVideoFile();
+        }
+    }
+    
+    private void processWebcam(int cameraIndex) {
+        try {
+            System.out.println("[" + cameraId + "] Abriendo webcam con índice: " + cameraIndex);
+            
+            VideoCapture capture = new VideoCapture();
+            capture.open(cameraIndex);
+            
+            if (!capture.isOpened()) {
+                System.err.println("[" + cameraId + "] ERROR: No se pudo abrir la webcam");
+                System.err.println("[" + cameraId + "] Intentando modo alternativo...");
+                processImageSequence();
+                return;
+            }
+            
+            System.out.println("[" + cameraId + "] Webcam abierta exitosamente");
+            
+            // Configurar propiedades de captura
+            capture.set(Videoio.CAP_PROP_BUFFERSIZE, 1);
+            
+            Mat frame = new Mat();
+            int frameCount = 0;
+            
+            while (running && capture.isOpened()) {
+                boolean success = capture.read(frame);
+                
+                if (!success || frame.empty()) {
+                    System.err.println("[" + cameraId + "] ERROR al leer frame de webcam");
+                    Thread.sleep(500);
+                    continue;
+                }
+                
+                frameCount++;
+                
+                // Procesar solo 1 de cada N frames
+                if (frameCount % frameSkip != 0) {
+                    continue;
+                }
+                
+                System.out.println("[" + cameraId + "] Procesando frame " + frameCount + " de webcam");
+                
+                // Guardar frame temporalmente
+                String tempImagePath = tempFramePath + "/" + cameraId + "_frame.jpg";
+                boolean saved = Imgcodecs.imwrite(tempImagePath, frame);
+                
+                if (!saved) {
+                    System.err.println("[" + cameraId + "] ERROR: No se pudo guardar el frame");
+                    continue;
+                }
+                
+                // Llamar al script de detección
+                String detectionResult = callDetectionScript(tempImagePath);
+                
+                if (detectionResult != null && !detectionResult.trim().isEmpty()) {
+                    processDetectionResult(detectionResult, frame);
+                }
+                
+                Thread.sleep(1000); // Pausa entre frames procesados
+            }
+            
+            capture.release();
+            
+        } catch (Exception e) {
+            System.err.println("[" + cameraId + "] ERROR en webcam: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -352,8 +422,9 @@ public class CameraProcessor implements Runnable {
                 String objeto = parts[0].trim();
                 double confidence = Double.parseDouble(parts[1].trim());
                 
-                // Solo registrar detecciones con confianza mayor a 0.5
-                if (confidence < 0.5) {
+                // Registrar detecciones con confianza mayor a 2% (para pruebas)
+                // En producción, usar 0.25 o más
+                if (confidence < 0.02) {
                     continue;
                 }
                 

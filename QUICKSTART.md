@@ -50,23 +50,24 @@ TEST1,test_video.mp4
 make compile-all
 ```
 
+### Servidor de Entrenamiento
+
+```powershell
+# Terminal 1
+make run-node
+```
+
 ### Servidor de Testeo
 
 ```powershell
 # Terminal 1
 make run-testing
-```
-
-### Servidor de Entrenamiento
-
-```powershell
-# Terminal 2
-make run-node
+# esperar aproximadamente 5/8 minutos hasta detectar la camara
 ```
 
 ### Cliente Vigilante
 
 ```powershell
-# Terminal 3
+# Terminal 2
 make run-cliente
 ```
