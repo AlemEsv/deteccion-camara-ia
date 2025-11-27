@@ -14,6 +14,7 @@ public class DetectionLog {
     private final ReentrantReadWriteLock.ReadLock readLock;
     private final ReentrantReadWriteLock.WriteLock writeLock;
     private final int maxDetections;
+    private volatile boolean paused;
     
     private DetectionLog(int maxDetections) {
         this.detections = new ArrayList<>();
@@ -21,6 +22,7 @@ public class DetectionLog {
         this.readLock = lock.readLock();
         this.writeLock = lock.writeLock();
         this.maxDetections = maxDetections;
+        this.paused = false;
     }
     
     /**
@@ -42,13 +44,19 @@ public class DetectionLog {
      * CRÍTICO: Protegido con WriteLock para evitar corrupción de registros
      */
     public void addDetection(Detection detection) {
+        // Si está pausado, no agregar más detecciones
+        if (paused) {
+            return;
+        }
+        
         writeLock.lock();
         try {
             detections.add(detection);
             
-            // Mantener solo las últimas N detecciones para no consumir demasiada memoria
-            if (detections.size() > maxDetections) {
-                detections.remove(0);
+            // Si alcanzamos el máximo, pausar hasta que el cliente haga refresh
+            if (detections.size() >= maxDetections) {
+                paused = true;
+                System.out.println("[LOG] Límite de " + maxDetections + " detecciones alcanzado. Pausando captura.");
             }
             
             System.out.println("[LOG] " + detection);
@@ -58,15 +66,27 @@ public class DetectionLog {
     }
     
     /**
+     * Verifica si el log está pausado
+     */
+    public boolean isPaused() {
+        return paused;
+    }
+    
+    /**
      * Obtiene todas las detecciones de forma thread-safe
      * Usa ReadLock para permitir lecturas concurrentes
+     * Al leer, limpia el log y reactiva la captura
      */
     public List<Detection> getAllDetections() {
-        readLock.lock();
+        writeLock.lock();
         try {
-            return new ArrayList<>(detections);
+            List<Detection> result = new ArrayList<>(detections);
+            detections.clear();
+            paused = false;
+            System.out.println("[LOG] Enviando " + result.size() + " detecciones. Log limpiado y captura reactivada.");
+            return result;
         } finally {
-            readLock.unlock();
+            writeLock.unlock();
         }
     }
     
@@ -115,13 +135,14 @@ public class DetectionLog {
     }
     
     /**
-     * Limpia todas las detecciones
+     * Limpia todas las detecciones y reactiva la captura
      */
     public void clear() {
         writeLock.lock();
         try {
             detections.clear();
-            System.out.println("[LOG] Log limpiado");
+            paused = false;
+            System.out.println("[LOG] Log limpiado y captura reactivada");
         } finally {
             writeLock.unlock();
         }

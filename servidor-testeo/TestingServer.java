@@ -60,9 +60,9 @@ public class TestingServer {
             return;
         }
         
-        // Inicializar DetectionLog
+        // Inicializar DetectionLog con límite de 30 detecciones
         System.out.println("[INIT] Inicializando sistema de logs...");
-        DetectionLog.getInstance(1000);
+        DetectionLog.getInstance(30);
         
         // Cargar configuración de cámaras
         System.out.println("[INIT] Cargando configuración de cámaras...");
@@ -70,9 +70,6 @@ public class TestingServer {
         
         if (cameras.isEmpty()) {
             System.err.println("[ERROR] No se encontraron cámaras configuradas");
-            System.err.println("[INFO] Crea un archivo '" + CONFIG_FILE + "' con el formato:");
-            System.err.println("       CAM_ID,RTSP_URL");
-            System.err.println("       Ejemplo: CAM1,rtsp://192.168.1.100:554/stream");
             return;
         }
         
@@ -125,14 +122,11 @@ public class TestingServer {
             }
         }
         
-        System.out.println("\n" + "=".repeat(70));
         System.out.println("SERVIDOR INICIADO EXITOSAMENTE");
-        System.out.println("=".repeat(70));
         System.out.println("Servidor de Logs:     Puerto " + logServerPort);
         System.out.println("Servidor de Imágenes: Puerto " + imageServerPort);
         System.out.println("Cámaras activas:      " + cameras.size());
         System.out.println("Directorio imágenes:  " + detectionImagesPath);
-        System.out.println("=".repeat(70));
         System.out.println("\nPresiona Ctrl+C para detener el servidor\n");
     }
     
@@ -262,7 +256,7 @@ public class TestingServer {
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {
-            System.out.println("\n[MAIN] Programa interrumpido");
+            System.out.println("\nPrograma interrumpido");
         }
     }
 }
