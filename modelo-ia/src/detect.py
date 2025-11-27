@@ -19,8 +19,8 @@ def detect_objects(image_path, model_path=None, conf_threshold=0.01):
     if model_path is None:
         script_dir = Path(__file__).parent
         possible_paths = [
-            script_dir.parent / 'yolov8n.pt',          # Modelo base (80 clases)
-            script_dir.parent / 'models' / 'best.pt',  # Modelo entrenado
+            script_dir.parent / 'models' / 'best.pt',  # Modelo entrenado PRIMERO
+            script_dir.parent / 'yolov8n.pt',          # Modelo base como fallback
             Path('/app/models/best.pt'),               # Docker
         ]
         
