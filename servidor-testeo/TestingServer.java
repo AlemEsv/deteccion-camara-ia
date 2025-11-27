@@ -62,7 +62,7 @@ public class TestingServer {
         
         // Inicializar DetectionLog con límite de 30 detecciones
         System.out.println("[INIT] Inicializando sistema de logs...");
-        DetectionLog.getInstance(30);
+        DetectionLog.getInstance();
         
         // Cargar configuración de cámaras
         System.out.println("[INIT] Cargando configuración de cámaras...");
@@ -233,7 +233,7 @@ public class TestingServer {
         String imagesPath = args.length > 2 ? args[2] : "./detection_images";
         int logPort = args.length > 3 ? Integer.parseInt(args[3]) : 9001;
         int imagePort = args.length > 4 ? Integer.parseInt(args[4]) : 9002;
-        int frameSkip = args.length > 5 ? Integer.parseInt(args[5]) : 30; // Procesar 1 de cada 30 frames
+        int frameSkip = args.length > 5 ? Integer.parseInt(args[5]) : 1; // Procesar todos los frames
         
         final TestingServer server = new TestingServer(
             pythonScript,

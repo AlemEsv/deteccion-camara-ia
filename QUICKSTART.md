@@ -33,15 +33,9 @@ Edita `servidor-testeo/cameras_config.txt`:
 # OPCIÓN RECOMENDADA: Video de prueba local
 TEST1,test_video.mp4
 
-# Alternativas:
-# Stream RTSP público (puede fallar por firewall)
-# TEST1,rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4
-
 # Cámara real
 # CAM1,rtsp://192.168.1.100:554/stream
 ```
-
-**⚠️ NOTA:** Si usas video local, asegúrate de tener un archivo `test_video.mp4` en `servidor-testeo/`
 
 ## Ejecutar el Sistema
 

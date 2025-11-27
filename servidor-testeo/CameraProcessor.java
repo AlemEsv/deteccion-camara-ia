@@ -2,6 +2,7 @@ import org.opencv.core.*;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.highgui.HighGui;
 
 import java.io.*;
 import java.util.UUID;
@@ -79,6 +80,9 @@ public class CameraProcessor implements Runnable {
             Mat frame = new Mat();
             int frameCount = 0;
             
+            // Crear ventana para mostrar el video
+            String windowName = "Cámara: " + cameraId;
+            
             while (running && capture.isOpened()) {
                 boolean success = capture.read(frame);
                 
@@ -90,14 +94,18 @@ public class CameraProcessor implements Runnable {
                 
                 frameCount++;
                 
-                // Procesar solo 1 de cada N frames
+                // Mostrar solo la mitad de los frames para evitar lag
+                if (frameCount % 2 == 0) {
+                    HighGui.imshow(windowName, frame);
+                    HighGui.waitKey(1);
+                }
+                
+                // Procesar solo 1 de cada N frames para IA (más pesado)
                 if (frameCount % frameSkip != 0) {
                     continue;
                 }
                 
-                System.out.println("[" + cameraId + "] Procesando frame " + frameCount + " de webcam");
-                
-                // Guardar frame temporalmente
+                // Guardar frame temporalmente para procesamiento de IA
                 String tempImagePath = tempFramePath + "/" + cameraId + "_frame.jpg";
                 boolean saved = Imgcodecs.imwrite(tempImagePath, frame);
                 
@@ -112,10 +120,9 @@ public class CameraProcessor implements Runnable {
                 if (detectionResult != null && !detectionResult.trim().isEmpty()) {
                     processDetectionResult(detectionResult, frame);
                 }
-                
-                Thread.sleep(1000); // Pausa entre frames procesados
             }
             
+            HighGui.destroyWindow(windowName);
             capture.release();
             
         } catch (Exception e) {
@@ -323,7 +330,7 @@ public class CameraProcessor implements Runnable {
                 // Leer frame
                 if (!capture.read(frame) || frame.empty()) {
                     System.err.println("[" + cameraId + "] ERROR: No se pudo leer frame");
-                    Thread.sleep(1000);
+                    Thread.sleep(10);
                     continue;
                 }
                 
@@ -383,17 +390,10 @@ public class CameraProcessor implements Runnable {
                 output.append(line).append("\n");
             }
             
-            int exitCode = process.waitFor();
-            
-            if (exitCode != 0) {
-                System.err.println("[" + cameraId + "] Script Python terminó con código: " + exitCode);
-                System.err.println("[" + cameraId + "] Salida: " + output.toString());
-            }
             
             return output.toString().trim();
             
         } catch (Exception e) {
-            System.err.println("[" + cameraId + "] ERROR llamando al script de IA: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -406,6 +406,7 @@ public class CameraProcessor implements Runnable {
      */
     private void processDetectionResult(String result, Mat frame) {
         try {
+            
             String[] lines = result.split("\n");
             
             for (String line : lines) {
@@ -421,7 +422,7 @@ public class CameraProcessor implements Runnable {
                 
                 String objeto = parts[0].trim();
                 double confidence = Double.parseDouble(parts[1].trim());
-                
+                              
                 // Registrar detecciones con confianza mayor a 2% (para pruebas)
                 // En producción, usar 0.25 o más
                 if (confidence < 0.02) {
@@ -431,19 +432,23 @@ public class CameraProcessor implements Runnable {
                 // Generar nombre único para la imagen
                 String imageFileName = UUID.randomUUID().toString() + ".jpg";
                 String imageFilePath = detectionImagesPath + "/" + imageFileName;
-                
+                                
                 // Guardar imagen de la detección
-                Imgcodecs.imwrite(imageFilePath, frame);
+                boolean saved = Imgcodecs.imwrite(imageFilePath, frame);
                 
+                if (!saved) {
+                    continue;
+                }
+                                
                 // Crear registro de detección
                 Detection detection = new Detection(cameraId, objeto, imageFileName, confidence);
                 
                 // Añadir al log (thread-safe)
                 detectionLog.addDetection(detection);
-            }
+                            }
             
         } catch (Exception e) {
-            System.err.println("[" + cameraId + "] ERROR procesando resultado: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     

@@ -13,30 +13,22 @@ public class DetectionLog {
     private final ReentrantReadWriteLock lock;
     private final ReentrantReadWriteLock.ReadLock readLock;
     private final ReentrantReadWriteLock.WriteLock writeLock;
-    private final int maxDetections;
-    private volatile boolean paused;
     
-    private DetectionLog(int maxDetections) {
+    private DetectionLog() {
         this.detections = new ArrayList<>();
         this.lock = new ReentrantReadWriteLock();
         this.readLock = lock.readLock();
         this.writeLock = lock.writeLock();
-        this.maxDetections = maxDetections;
-        this.paused = false;
     }
     
     /**
      * Obtiene la instancia única del log (Singleton)
      */
-    public static synchronized DetectionLog getInstance(int maxDetections) {
+    public static synchronized DetectionLog getInstance() {
         if (instance == null) {
-            instance = new DetectionLog(maxDetections);
+            instance = new DetectionLog();
         }
         return instance;
-    }
-    
-    public static DetectionLog getInstance() {
-        return getInstance(1000); // Por defecto 1000 registros
     }
     
     /**
@@ -44,32 +36,13 @@ public class DetectionLog {
      * CRÍTICO: Protegido con WriteLock para evitar corrupción de registros
      */
     public void addDetection(Detection detection) {
-        // Si está pausado, no agregar más detecciones
-        if (paused) {
-            return;
-        }
-        
         writeLock.lock();
         try {
             detections.add(detection);
-            
-            // Si alcanzamos el máximo, pausar hasta que el cliente haga refresh
-            if (detections.size() >= maxDetections) {
-                paused = true;
-                System.out.println("[LOG] Límite de " + maxDetections + " detecciones alcanzado. Pausando captura.");
-            }
-            
             System.out.println("[LOG] " + detection);
         } finally {
             writeLock.unlock();
         }
-    }
-    
-    /**
-     * Verifica si el log está pausado
-     */
-    public boolean isPaused() {
-        return paused;
     }
     
     /**
@@ -82,8 +55,7 @@ public class DetectionLog {
         try {
             List<Detection> result = new ArrayList<>(detections);
             detections.clear();
-            paused = false;
-            System.out.println("[LOG] Enviando " + result.size() + " detecciones. Log limpiado y captura reactivada.");
+            System.out.println("[LOG] Enviando " + result.size() + " detecciones. Log limpiado.");
             return result;
         } finally {
             writeLock.unlock();
@@ -105,21 +77,33 @@ public class DetectionLog {
     }
     
     /**
-     * Convierte las últimas N detecciones a JSON
+     * Convierte las últimas N detecciones a JSON y limpia el log
+     * Esto reactiva la captura de nuevas detecciones
      */
     public String getLastDetectionsJSON(int n) {
-        List<Detection> lastDetections = getLastDetections(n);
-        StringBuilder json = new StringBuilder("[");
-        
-        for (int i = 0; i < lastDetections.size(); i++) {
-            json.append(lastDetections.get(i).toJSON());
-            if (i < lastDetections.size() - 1) {
-                json.append(",");
+        writeLock.lock();
+        try {
+            // Obtener todas las detecciones actuales
+            List<Detection> currentDetections = new ArrayList<>(detections);
+            
+            // Construir JSON
+            StringBuilder json = new StringBuilder("[");
+            for (int i = 0; i < currentDetections.size(); i++) {
+                json.append(currentDetections.get(i).toJSON());
+                if (i < currentDetections.size() - 1) {
+                    json.append(",");
+                }
             }
+            json.append("]");
+            
+            // Limpiar el log y reactivar captura
+            detections.clear();
+            System.out.println("[LOG] Enviando " + currentDetections.size() + " detecciones.");
+            
+            return json.toString();
+        } finally {
+            writeLock.unlock();
         }
-        
-        json.append("]");
-        return json.toString();
     }
     
     /**
@@ -135,14 +119,13 @@ public class DetectionLog {
     }
     
     /**
-     * Limpia todas las detecciones y reactiva la captura
+     * Limpia todas las detecciones
      */
     public void clear() {
         writeLock.lock();
         try {
             detections.clear();
-            paused = false;
-            System.out.println("[LOG] Log limpiado y captura reactivada");
+            System.out.println("[LOG] Log limpiado");
         } finally {
             writeLock.unlock();
         }
